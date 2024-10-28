@@ -1,12 +1,13 @@
 {
     "command": [
+        // every object is runned in a separate thread
         {
             "shell": "bash",
-            "command": [
+            "command": [ // this command is runned sequentially
                 "echo 'Test Case 1: Hello, World!'",
                 "echo 'Test Case 1: This is the second line!'"
             ],
-            "cancel-on-failure": false
+            "cancel-on-failure": false  // If this is true, all of the runned commands will be cancelled if this command fails (exit code is not 0)
         },
         {
             "shell": "bash",
@@ -33,10 +34,10 @@
                 "echo 'Test Case 4: This should fail but continue'",
                 "invalid_command"
             ],
-            "cancel-on-failure": false
+            "cancel-on-failure": true
         },
         {
-            "shell": "bash",
+            "shell": "zsh",
             "command": [
                 "echo 'Test Case 5: This will took a long time'",
                 "echo 'Test Case 5: This is the second line from a long running command!'",
@@ -46,7 +47,6 @@
                 "echo '3'",
                 "echo '4'",
                 "echo '5'"
-
             ],
             "cancel-on-failure": false
         }

@@ -20,7 +20,7 @@ type Config struct {
 	Commands []Command `json:"command"`
 }
 
-func runCommand(ctx context.Context, cmd Command, wg *sync.WaitGroup, successChan chan bool) {
+func runCommand(ctx context.Context, cmd Command, wg *sync.WaitGroup, successChan chan bool, cancel context.CancelFunc) {
 	defer wg.Done()
 	for _, c := range cmd.Command {
 		select {
@@ -34,6 +34,7 @@ func runCommand(ctx context.Context, cmd Command, wg *sync.WaitGroup, successCha
 			if err != nil {
 				fmt.Printf("Error creating StdoutPipe for command '%s': %v\n", c, err)
 				if cmd.CancelOnFailure {
+					cancel()
 					successChan <- false
 					return
 				}
@@ -43,6 +44,7 @@ func runCommand(ctx context.Context, cmd Command, wg *sync.WaitGroup, successCha
 			if err != nil {
 				fmt.Printf("Error creating StderrPipe for command '%s': %v\n", c, err)
 				if cmd.CancelOnFailure {
+					cancel()
 					successChan <- false
 					return
 				}
@@ -51,6 +53,7 @@ func runCommand(ctx context.Context, cmd Command, wg *sync.WaitGroup, successCha
 			if err := command.Start(); err != nil {
 				fmt.Printf("Error starting command '%s': %v\n", c, err)
 				if cmd.CancelOnFailure {
+					cancel()
 					successChan <- false
 					return
 				}
@@ -62,8 +65,20 @@ func runCommand(ctx context.Context, cmd Command, wg *sync.WaitGroup, successCha
 			if err := command.Wait(); err != nil {
 				fmt.Printf("Error waiting for command '%s' to finish: %v\n", c, err)
 				if cmd.CancelOnFailure {
+					cancel()
 					successChan <- false
 					return
+				}
+				// Check if the command exited with a non-zero status
+				if exitError, ok := err.(*exec.ExitError); ok {
+					if exitError.ExitCode() != 0 {
+						fmt.Printf("Command '%s' exited with non-zero status: %d\n", c, exitError.ExitCode())
+						if cmd.CancelOnFailure {
+							cancel()
+							successChan <- false
+							return
+						}
+					}
 				}
 			}
 		}
@@ -94,11 +109,7 @@ func main() {
 	for _, cmd := range config.Commands {
 		wg.Add(1)
 		go func(cmd Command) {
-			defer wg.Done()
-			runCommand(ctx, cmd, &wg, successChan)
-			if !<-successChan && cmd.CancelOnFailure {
-				cancel()
-			}
+			runCommand(ctx, cmd, &wg, successChan, cancel)
 		}(cmd)
 	}
 
@@ -117,7 +128,9 @@ func main() {
 
 	if success {
 		fmt.Println("All commands executed successfully.")
+		os.Exit(0)
 	} else {
 		fmt.Println("Some commands failed.")
+		os.Exit(1)
 	}
 }
