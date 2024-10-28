@@ -3,82 +3,20 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
-	"io"
 	"os"
-	"os/exec"
 	"sync"
 )
 
-type Command struct {
-	Shell           string   `json:"shell"`
-	Command         []string `json:"command"`
-	CancelOnFailure bool     `json:"cancel-on-failure"`
-}
-
-type Config struct {
-	Commands []Command `json:"command"`
-}
-
-func runCommand(ctx context.Context, cmd Command, wg *sync.WaitGroup, resultChan chan<- bool) {
-	defer wg.Done()
-	success := true
-
-	for _, c := range cmd.Command {
-		select {
-		case <-ctx.Done():
-			fmt.Printf("Command '%s' canceled due to context cancellation.\n", c)
-			resultChan <- false
-			return
-		default:
-			command := exec.CommandContext(ctx, cmd.Shell, "-c", c)
-			stdout, err := command.StdoutPipe()
-			if err != nil {
-				fmt.Printf("Error creating StdoutPipe for command '%s': %v\n", c, err)
-				success = false
-				break
-			}
-
-			stderr, err := command.StderrPipe()
-			if err != nil {
-				fmt.Printf("Error creating StderrPipe for command '%s': %v\n", c, err)
-				success = false
-				break
-			}
-
-			if err := command.Start(); err != nil {
-				fmt.Printf("Error starting command '%s': %v\n", c, err)
-				success = false
-				break
-			}
-
-			go io.Copy(os.Stdout, stdout)
-			go io.Copy(os.Stderr, stderr)
-
-			if err := command.Wait(); err != nil {
-				if exitErr, ok := err.(*exec.ExitError); ok {
-					fmt.Printf("Command '%s' failed with exit code %d\n", c, exitErr.ExitCode())
-				} else {
-					fmt.Printf("Command '%s' failed: %v\n", c, err)
-				}
-				success = false
-				if cmd.CancelOnFailure {
-					break
-				}
-			}
-		}
-
-		if !success && cmd.CancelOnFailure {
-			break
-		}
-	}
-
-	resultChan <- success
-}
-
 func main() {
+	// Define command-line flag for JSON file path
+	configPath := flag.String("c", "sample.json", "Path to the JSON command configuration file")
+
+	flag.Parse()
+
 	// Read JSON file
-	file, err := os.ReadFile("sample.json")
+	file, err := os.ReadFile(*configPath)
 	if err != nil {
 		fmt.Println("Error reading JSON file:", err)
 		os.Exit(1)
@@ -92,16 +30,24 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
-	resultChan := make(chan bool, len(config.Commands))
+	var commandRunner CommandRunner = *NewCommandRunner()
+
+	resultChan := make(chan bool, len(config.Actions))
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Run commands in parallel
-	for _, cmd := range config.Commands {
+	// Run actions in parallel
+	for _, act := range config.Actions {
 		wg.Add(1)
-		go func(cmd Command) {
-			runCommand(ctx, cmd, &wg, resultChan)
-		}(cmd)
+		go func(act Action) {
+			success := commandRunner.RunCommand(ctx, act)
+			if !success && act.CancelOnFailure {
+				fmt.Printf("Critical action failed: %s\n", act.Commands[0])
+				cancel() // Cancel all other goroutines
+			}
+			resultChan <- success
+			wg.Done()
+		}(act)
 	}
 
 	// Wait for all goroutines to finish
@@ -111,19 +57,18 @@ func main() {
 	}()
 
 	// Check results
-	success := true
+	overallSuccess := true
 	for result := range resultChan {
 		if !result {
-			success = false
-			cancel() // Cancel all ongoing operations
+			overallSuccess = false
 		}
 	}
 
-	if success {
-		fmt.Println("All commands executed successfully.")
+	if overallSuccess {
+		fmt.Println("All actions executed successfully.")
 		os.Exit(0)
 	} else {
-		fmt.Println("Some commands failed.")
+		fmt.Println("Some actions failed.")
 		os.Exit(1)
 	}
 }

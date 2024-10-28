@@ -1,28 +1,25 @@
 {
-    "command": [
-        // every object is runned in a separate thread
+    "actions": [
         {
             "shell": "bash",
-            "command": [ // this command is runned sequentially
+            "commands": [
                 "echo 'Test Case 1: Hello, World!'",
                 "echo 'Test Case 1: This is the second line!'"
-            ],
-            "cancel-on-failure": false  // If this is true, all of the runned commands will be cancelled if this command fails (exit code is not 0)
-        },
-        {
-            "shell": "bash",
-            "command": [
-                "echo 'Test Case 2: This runs on another thread'",
-                "echo 'Test Case 2: This is the second line from another thread!'",
-                "mkdir test_dir_2"
             ],
             "cancel-on-failure": false
         },
         {
             "shell": "bash",
-            "command": [
+            "commands": [
+                "echo 'Test Case 2: This runs on another thread'",
+                "echo 'Test Case 2: This is the second line from another thread!'"
+            ],
+            "cancel-on-failure": false
+        },
+        {
+            "shell": "bash",
+            "commands": [
                 "echo 'Test Case 3: This should fail'",
-                "invalid_command",
                 "echo '1 from case 3'",
                 "echo '2 from case 4'"
             ],
@@ -30,20 +27,23 @@
         },
         {
             "shell": "bash",
-            "command": [
+            "commands": [
                 "echo 'Test Case 4: This should fail but continue'",
-                "invalid_command"
+                "ls",
+                "exit 0",
+                "sleep 5",
+                "ls -la"
             ],
-            "cancel-on-failure": true
+            "cancel-on-failure": false
         },
         {
-            "shell": "zsh",
-            "command": [
+            "shell": "bash",
+            "commands": [
                 "echo 'Test Case 5: This will took a long time'",
                 "echo 'Test Case 5: This is the second line from a long running command!'",
                 "echo '1'",
                 "echo '2'",
-                "sleep 10",
+                "sleep 5",
                 "echo '3'",
                 "echo '4'",
                 "echo '5'"
