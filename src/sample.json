@@ -1,0 +1,54 @@
+{
+    "command": [
+        {
+            "shell": "bash",
+            "command": [
+                "echo 'Test Case 1: Hello, World!'",
+                "echo 'Test Case 1: This is the second line!'"
+            ],
+            "cancel-on-failure": false
+        },
+        {
+            "shell": "bash",
+            "command": [
+                "echo 'Test Case 2: This runs on another thread'",
+                "echo 'Test Case 2: This is the second line from another thread!'",
+                "mkdir test_dir_2"
+            ],
+            "cancel-on-failure": false
+        },
+        {
+            "shell": "bash",
+            "command": [
+                "echo 'Test Case 3: This should fail'",
+                "invalid_command",
+                "echo '1 from case 3'",
+                "echo '2 from case 4'"
+            ],
+            "cancel-on-failure": false
+        },
+        {
+            "shell": "bash",
+            "command": [
+                "echo 'Test Case 4: This should fail but continue'",
+                "invalid_command"
+            ],
+            "cancel-on-failure": false
+        },
+        {
+            "shell": "bash",
+            "command": [
+                "echo 'Test Case 5: This will took a long time'",
+                "echo 'Test Case 5: This is the second line from a long running command!'",
+                "echo '1'",
+                "echo '2'",
+                "sleep 10",
+                "echo '3'",
+                "echo '4'",
+                "echo '5'"
+
+            ],
+            "cancel-on-failure": false
+        }
+    ]
+}
