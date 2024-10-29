@@ -6,6 +6,3 @@ type Action struct {
 	CancelOnFailure bool     `json:"cancel-on-failure"`
 }
 
-type Config struct {
-	Actions []Action `json:"actions"`
-}

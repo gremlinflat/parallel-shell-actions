@@ -1,54 +1,52 @@
-{
-    "actions": [
-        {
-            "shell": "bash",
-            "commands": [
-                "echo 'Test Case 1: Hello, World!'",
-                "echo 'Test Case 1: This is the second line!'"
-            ],
-            "cancel-on-failure": false
-        },
-        {
-            "shell": "bash",
-            "commands": [
-                "echo 'Test Case 2: This runs on another thread'",
-                "echo 'Test Case 2: This is the second line from another thread!'"
-            ],
-            "cancel-on-failure": false
-        },
-        {
-            "shell": "bash",
-            "commands": [
-                "echo 'Test Case 3: This should fail'",
-                "echo '1 from case 3'",
-                "echo '2 from case 4'"
-            ],
-            "cancel-on-failure": false
-        },
-        {
-            "shell": "bash",
-            "commands": [
-                "echo 'Test Case 4: This should fail but continue'",
-                "ls",
-                "exit 0",
-                "sleep 5",
-                "ls -la"
-            ],
-            "cancel-on-failure": false
-        },
-        {
-            "shell": "bash",
-            "commands": [
-                "echo 'Test Case 5: This will took a long time'",
-                "echo 'Test Case 5: This is the second line from a long running command!'",
-                "echo '1'",
-                "echo '2'",
-                "sleep 5",
-                "echo '3'",
-                "echo '4'",
-                "echo '5'"
-            ],
-            "cancel-on-failure": false
-        }
-    ]
-}
+[
+    {
+        "shell": "bash",
+        "commands": [
+            "echo 'Test Case 1: Hello, World!'",
+            "echo 'Test Case 1: This is the second line!'"
+        ],
+        "cancel-on-failure": false
+    },
+    {
+        "shell": "bash",
+        "commands": [
+            "echo 'Test Case 2: This runs on another thread'",
+            "echo 'Test Case 2: This is the second line from another thread!'"
+        ],
+        "cancel-on-failure": false
+    },
+    {
+        "shell": "bash",
+        "commands": [
+            "echo 'Test Case 3: This should fail'",
+            "echo '1 from case 3'",
+            "echo '2 from case 4'"
+        ],
+        "cancel-on-failure": false
+    },
+    {
+        "shell": "bash",
+        "commands": [
+            "echo 'Test Case 4: This should fail but continue'",
+            "ls",
+            "exit 0",
+            "sleep 5",
+            "ls -la"
+        ],
+        "cancel-on-failure": false
+    },
+    {
+        "shell": "bash",
+        "commands": [
+            "echo 'Test Case 5: This will took a long time'",
+            "echo 'Test Case 5: This is the second line from a long running command!'",
+            "echo '1'",
+            "echo '2'",
+            "sleep 5",
+            "echo '3'",
+            "echo '4'",
+            "echo '5'"
+        ],
+        "cancel-on-failure": false
+    }
+]

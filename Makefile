@@ -2,7 +2,7 @@
 APP_NAME = parallel-shell-executor
 SRC_DIR = src
 DIST_DIR = dist
-CONFIG_FILE = test/sample.json
+SAMPLE_INPUT = test/sample.json
 
 # Default target
 .PHONY: all
@@ -19,4 +19,14 @@ build:
 run: build
 	@echo "Running the application..."
 	@mkdir -p $(DIST_DIR)
-	./$(DIST_DIR)/$(APP_NAME) -c $(CONFIG_FILE)
+	./$(DIST_DIR)/$(APP_NAME) -i $(SAMPLE_INPUT)
+
+
+# Release
+.PHONY: release
+release: build
+	@echo "Building the application for release..."
+	@mkdir -p $(DIST_DIR)
+	go build -o $(DIST_DIR)/$(APP_NAME) -ldflags "-s -w" $(SRC_DIR)/*.go
+	@echo "Release build completed."
+	@echo "You can find the release build in the '$(DIST_DIR)' directory."

@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// Define command-line flag for JSON file path
-	configPath := flag.String("c", "sample.json", "Path to the JSON command configuration file")
+	configPath := flag.String("i", "action.json", "Path to the JSON command configuration file")
 
 	flag.Parse()
 
@@ -23,8 +23,8 @@ func main() {
 	}
 
 	// Parse JSON
-	var config Config
-	if err := json.Unmarshal(file, &config); err != nil {
+	var actions []Action
+	if err := json.Unmarshal(file, &actions); err != nil {
 		fmt.Println("Error parsing JSON:", err)
 		os.Exit(1)
 	}
@@ -32,12 +32,12 @@ func main() {
 	var wg sync.WaitGroup
 	var commandRunner CommandRunner = *NewCommandRunner()
 
-	resultChan := make(chan bool, len(config.Actions))
+	resultChan := make(chan bool, len(actions))
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Run actions in parallel
-	for _, act := range config.Actions {
+	for _, act := range actions {
 		wg.Add(1)
 		go func(act Action) {
 			success := commandRunner.RunCommand(ctx, act)
