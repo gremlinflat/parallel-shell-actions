@@ -33,7 +33,7 @@
             "sleep 5",
             "ls -la"
         ],
-        "cancel-on-failure": true
+        "cancel-on-failure": false
     },
     {
         "shell": "bash",

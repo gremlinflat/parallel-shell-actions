@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -30,38 +31,39 @@ func (cr *CommandRunner) RunCommand(ctx context.Context, act Action) []CommandRe
 			command := exec.CommandContext(ctx, shell, "-c", c)
 			stdout, err := command.StdoutPipe()
 			if err != nil {
-				fmt.Printf("Error creating StdoutPipe for command '%s': %v\n", c, err)
+				fmt.Printf("[%s] Error creating StdoutPipe for command '%s': %v\n", act.Namespace, c, err)
 				results = append(results, CommandResult{Command: c, Success: false, ExitCode: -1})
 				continue
 			}
 
 			stderr, err := command.StderrPipe()
 			if err != nil {
-				fmt.Printf("Error creating StderrPipe for command '%s': %v\n", c, err)
+				fmt.Printf("[%s] Error creating StderrPipe for command '%s': %v\n", act.Namespace, c, err)
 				results = append(results, CommandResult{Command: c, Success: false, ExitCode: -1})
 				continue
 			}
 
 			if err := command.Start(); err != nil {
-				fmt.Printf("Error starting command '%s': %v\n", c, err)
+				fmt.Printf("[%s] Error starting command '%s': %v\n", act.Namespace, c, err)
 				results = append(results, CommandResult{Command: c, Success: false, ExitCode: -1})
 				continue
 			}
 
-			go io.Copy(os.Stdout, stdout)
-			go io.Copy(os.Stderr, stderr)
+			go cr.pipeOutput(stdout, os.Stdout, act.Namespace)
+			go cr.pipeOutput(stderr, os.Stderr, act.Namespace)
+
 
 			if err := command.Wait(); err != nil {
 				if exitErr, ok := err.(*exec.ExitError); ok {
 					exitCode := exitErr.ExitCode()
-					fmt.Printf("Command '%s' failed with exit code %d\n", c, exitCode)
+					fmt.Printf("[%s] Command '%s' failed with exit code %d\n", act.Namespace, c, exitCode)
 					results = append(results, CommandResult{Command: c, Success: false, ExitCode: exitCode})
 				} else {
-					fmt.Printf("Command '%s' failed: %v\n", c, err)
+					fmt.Printf("[%s] Command '%s' failed: %v\n", act.Namespace, c, err)
 					results = append(results, CommandResult{Command: c, Success: false, ExitCode: -1})
 				}
 				if act.CancelOnFailure {
-					fmt.Printf("FAIL: Command '%s' failed on critical action. Cancelling further actions.\n", c)
+					fmt.Printf("[%s] FAIL: Command '%s' failed on critical action. Cancelling further actions.\n", act.Namespace, c)
 					return results
 				}
 			} else {
@@ -73,6 +75,13 @@ func (cr *CommandRunner) RunCommand(ctx context.Context, act Action) []CommandRe
 	return results
 }
 
+func (cr *CommandRunner) pipeOutput(input io.Reader, output *os.File, namespace string) {
+	scanner := bufio.NewScanner(input)
+	for scanner.Scan() {
+		fmt.Fprintf(output, "[%s] %s\n", namespace, scanner.Text())
+	}
+}
+
 func (cr *CommandRunner) getActionShell(act Action) string {
 	// checking if the shell is valid
 	for _, shell := range cr.supportedShells() {
@@ -81,7 +90,7 @@ func (cr *CommandRunner) getActionShell(act Action) string {
 		}
 	}
 
-	fmt.Printf("Invalid shell type '%s'. Defaulting to '%s'\n", act.Shell, cr.defaultShell())
+	fmt.Printf("[%s] Invalid shell type '%s'. Defaulting to '%s'\n", act.Namespace, act.Shell, cr.defaultShell())
 	return cr.defaultShell()
 }
 

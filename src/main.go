@@ -37,7 +37,12 @@ func main() {
 	defer cancel()
 
 	// Run actions in parallel
-	for _, act := range actions {
+	for idx, act := range actions {
+
+		if act.Namespace == "" {
+			act.Namespace = fmt.Sprintf("Action-%d", idx+1)
+		}
+
 		wg.Add(1)
 		// Run each action in a separate goroutine
 		go func(act Action) {
