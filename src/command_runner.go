@@ -17,10 +17,8 @@ func NewCommandRunner() *CommandRunner {
 func (cr *CommandRunner) RunCommand(ctx context.Context, act Action) bool {
 	success := true
 
-	if !cr.isValidShell(act.Shell) {
-		fmt.Printf("Error: Invalid shell type '%s'\n", act.Shell)
-		return false
-	}
+	// set valid shell to run the commands
+	act.Shell = cr.getActionShell(act)
 
 	for _, c := range act.Commands {
 		select {
@@ -70,12 +68,24 @@ func (cr *CommandRunner) RunCommand(ctx context.Context, act Action) bool {
 	return success
 }
 
-func (cr *CommandRunner) isValidShell(shell string) bool {
-	validShells := []string{"bash", "sh"} // Github Actions supports bash and sh
-	for _, validShell := range validShells {
-		if shell == validShell {
-			return true
+func (cr *CommandRunner) getActionShell(act Action) string {
+	// checking if the shell is valid
+	for _, shell := range cr.supportedShells() {
+		if act.Shell == shell {
+			return act.Shell
 		}
 	}
-	return false
+
+	fmt.Printf("Invalid shell type '%s'. Defaulting to '%s'\n", act.Shell, cr.defaultShell())
+	return cr.defaultShell()
 }
+
+func (cr *CommandRunner) supportedShells() []string {
+	validShells := []string{"bash", "sh"} // Github Actions supports bash and sh
+	return validShells
+}
+
+func (cr *CommandRunner) defaultShell() string {
+	return "bash"
+}
+

@@ -11,21 +11,21 @@ import (
 
 func main() {
 	// Define command-line flag for JSON file path
-	configPath := flag.String("i", "action.json", "Path to the JSON command configuration file")
+	inputPath := flag.String("i", "action.json", "Path to the JSON file containing the actions to execute")
 
 	flag.Parse()
 
 	// Read JSON file
-	file, err := os.ReadFile(*configPath)
+	file, err := os.ReadFile(*inputPath)
 	if err != nil {
-		fmt.Println("Error reading JSON file:", err)
+		fmt.Println("Error reading Input file:", err)
 		os.Exit(1)
 	}
 
 	// Parse JSON
 	var actions []Action
 	if err := json.Unmarshal(file, &actions); err != nil {
-		fmt.Println("Error parsing JSON:", err)
+		fmt.Println("Error parsing Input file:", err)
 		os.Exit(1)
 	}
 
@@ -39,6 +39,8 @@ func main() {
 	// Run actions in parallel
 	for _, act := range actions {
 		wg.Add(1)
+		
+		// Run each action in a separate goroutine
 		go func(act Action) {
 			success := commandRunner.RunCommand(ctx, act)
 			if !success && act.CancelOnFailure {
