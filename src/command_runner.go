@@ -25,27 +25,27 @@ func (cr *CommandRunner) RunCommand(ctx context.Context, act Action) []CommandRe
 		select {
 		case <-ctx.Done():
 			fmt.Printf("Command '%s' canceled due to context cancellation.\n", c)
-			results = append(results, CommandResult{Command: c, Success: false, ExitCode: -99})
+			results = append(results, CommandResult{Namespace:act.Namespace, Command: c, Success: false, ExitCode: -99})
 			return results
 		default:
 			command := exec.CommandContext(ctx, shell, "-c", c)
 			stdout, err := command.StdoutPipe()
 			if err != nil {
 				fmt.Printf("[%s] Error creating StdoutPipe for command '%s': %v\n", act.Namespace, c, err)
-				results = append(results, CommandResult{Command: c, Success: false, ExitCode: -2})
+				results = append(results, CommandResult{Namespace:act.Namespace, Command: c, Success: false, ExitCode: -2})
 				continue
 			}
 
 			stderr, err := command.StderrPipe()
 			if err != nil {
 				fmt.Printf("[%s] Error creating StderrPipe for command '%s': %v\n", act.Namespace, c, err)
-				results = append(results, CommandResult{Command: c, Success: false, ExitCode: -2})
+				results = append(results, CommandResult{Namespace:act.Namespace, Command: c, Success: false, ExitCode: -2})
 				continue
 			}
 
 			if err := command.Start(); err != nil {
 				fmt.Printf("[%s] Error starting command '%s': %v\n", act.Namespace, c, err)
-				results = append(results, CommandResult{Command: c, Success: false, ExitCode: -3})
+				results = append(results, CommandResult{Namespace:act.Namespace, Command: c, Success: false, ExitCode: -3})
 				continue
 			}
 
@@ -56,17 +56,17 @@ func (cr *CommandRunner) RunCommand(ctx context.Context, act Action) []CommandRe
 				if exitErr, ok := err.(*exec.ExitError); ok {
 					exitCode := exitErr.ExitCode()
 					fmt.Printf("[%s] Command '%s' failed with exit code %d\n", act.Namespace, c, exitCode)
-					results = append(results, CommandResult{Command: c, Success: false, ExitCode: exitCode})
+					results = append(results, CommandResult{Namespace:act.Namespace, Command: c, Success: false, ExitCode: exitCode})
 				} else { 
 					fmt.Printf("[%s] Command '%s' failed: %v\n", act.Namespace, c, err)
-					results = append(results, CommandResult{Command: c, Success: false, ExitCode: -1})
+					results = append(results, CommandResult{Namespace:act.Namespace, Command: c, Success: false, ExitCode: -1})
 				}
 				if act.CancelOnFailure {
 					fmt.Printf("[%s] FAIL: Command '%s' failed on critical action. Cancelling further actions.\n", act.Namespace, c)
 					return results
 				}
 			} else {
-				results = append(results, CommandResult{Command: c, Success: true, ExitCode: 0})
+				results = append(results, CommandResult{Namespace:act.Namespace, Command: c, Success: true, ExitCode: 0})
 			}
 		}
 	}

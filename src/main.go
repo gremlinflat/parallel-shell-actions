@@ -79,9 +79,9 @@ func main() {
 
 	// Log failed commands
 	if len(failedCommands) > 0 {
-		fmt.Println("\nFailed commands:")
+		fmt.Println("\nFailed Actions:")
 		for _, failedCmd := range failedCommands {
-			fmt.Printf("Command: %s\nExit Code: %d\n\n", failedCmd.Command, failedCmd.ExitCode)
+			fmt.Printf("- [%s] Command: %s, Exit Code: %d\n", failedCmd.Namespace, failedCmd.Command, failedCmd.ExitCode)
 		}
 		fmt.Printf("Total failed commands: %d\n", len(failedCommands))
 		os.Exit(1)

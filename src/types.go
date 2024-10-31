@@ -8,6 +8,7 @@ type Action struct {
 }
 
 type CommandResult struct {
+	Namespace string
 	Command string
 	Success bool
 	ExitCode int // -3 for error starting command, -2 for error creating pipe, -99 for context cancellation

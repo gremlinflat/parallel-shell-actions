@@ -27,6 +27,7 @@
     },
     {
         "shell": "bash",
+        "name": "Critical, failing",
         "commands": [
             "echo 'Test Case 4: This should fail but continue'",
             "ls",
@@ -34,7 +35,7 @@
             "sleep 5",
             "ls -la"
         ],
-        "cancel-on-failure": false
+        "cancel-on-failure": true
     },
     {
         "shell": "bash",
