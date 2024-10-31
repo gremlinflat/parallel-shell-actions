@@ -1,6 +1,7 @@
 [
     {
         "shell": "bash",
+        "name": "Test Case 1",
         "commands": [
             "echo 'Test Case 1: Hello, World!'",
             "echo 'Test Case 1: This is the second line!'"
@@ -37,6 +38,7 @@
     },
     {
         "shell": "bash",
+        "name": "BUILD STAGING",
         "commands": [
             "echo 'Test Case 5: This will took a long time'",
             "echo 'Test Case 5: This is the second line from a long running command!'",
