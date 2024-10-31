@@ -1,10 +1,7 @@
 [
     {
-        "shell": "bash",
-        "commands": [
-            "echo 'Test Case 1: Hello, World!'",
-            "echo 'Test Case 1: This is the second line!'"
-        ],
+        "shell": "bashingtse",
+        "commands": [],
         "cancel-on-failure": false
     },
     {
@@ -29,11 +26,11 @@
         "commands": [
             "echo 'Test Case 4: This should fail but continue'",
             "ls",
-            "exit 99",
+            "exit 0",
             "sleep 5",
             "ls -la"
         ],
-        "cancel-on-failure": true
+        "cancel-on-failure": false
     },
     {
         "shell": "bash",

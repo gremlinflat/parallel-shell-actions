@@ -32,23 +32,27 @@ func main() {
 	var wg sync.WaitGroup
 	var commandRunner CommandRunner = *NewCommandRunner()
 
-	resultChan := make(chan bool, len(actions))
+	resultChan := make(chan []CommandResult, len(actions))
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Run actions in parallel
 	for _, act := range actions {
 		wg.Add(1)
-		
 		// Run each action in a separate goroutine
 		go func(act Action) {
-			success := commandRunner.RunCommand(ctx, act)
-			if !success && act.CancelOnFailure {
-				fmt.Printf("Critical action failed: %s\n", act.Commands[0])
-				cancel() // Cancel all other goroutines
+			defer wg.Done()
+			results := commandRunner.RunCommand(ctx, act)
+			resultChan <- results
+
+			// Check if any command failed and should cancel other goroutines
+			for _, result := range results {
+				if !result.Success && act.CancelOnFailure {
+					fmt.Printf("Cancelling all goroutines due to failure in command: %s\n", result.Command)
+					cancel()
+					return
+				}
 			}
-			resultChan <- success
-			wg.Done()
 		}(act)
 	}
 
@@ -59,18 +63,27 @@ func main() {
 	}()
 
 	// Check results
-	overallSuccess := true
-	for result := range resultChan {
-		if !result {
-			overallSuccess = false
+
+	// Check results
+	var failedCommands []CommandResult
+	for results := range resultChan {
+		for _, result := range results {
+			if !result.Success {
+				failedCommands = append(failedCommands, result)
+			}
 		}
 	}
 
-	if overallSuccess {
+	// Log failed commands
+	if len(failedCommands) > 0 {
+		fmt.Println("\nFailed commands:")
+		for _, failedCmd := range failedCommands {
+			fmt.Printf("Command: %s\nExit Code: %d\n\n", failedCmd.Command, failedCmd.ExitCode)
+		}
+		fmt.Printf("Total failed commands: %d\n", len(failedCommands))
+		os.Exit(1)
+	} else {
 		fmt.Println("All actions executed successfully.")
 		os.Exit(0)
-	} else {
-		fmt.Println("Some actions failed.")
-		os.Exit(1)
 	}
 }

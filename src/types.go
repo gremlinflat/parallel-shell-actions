@@ -6,3 +6,8 @@ type Action struct {
 	CancelOnFailure bool     `json:"cancel-on-failure"` // nullable (default: false); flag of critical point
 }
 
+type CommandResult struct {
+	Command string
+	Success bool
+	ExitCode int
+}

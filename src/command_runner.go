@@ -14,36 +14,37 @@ func NewCommandRunner() *CommandRunner {
 	return &CommandRunner{}
 }
 
-func (cr *CommandRunner) RunCommand(ctx context.Context, act Action) bool {
-	success := true
+func (cr *CommandRunner) RunCommand(ctx context.Context, act Action) []CommandResult {
+	results := []CommandResult{}
 
 	// set valid shell to run the commands
-	act.Shell = cr.getActionShell(act)
+	shell := cr.getActionShell(act)
 
 	for _, c := range act.Commands {
 		select {
 		case <-ctx.Done():
 			fmt.Printf("Command '%s' canceled due to context cancellation.\n", c)
-			return false
+			results = append(results, CommandResult{Command: c, Success: false, ExitCode: -1})
+			return results
 		default:
-			command := exec.CommandContext(ctx, act.Shell, "-c", c)
+			command := exec.CommandContext(ctx, shell, "-c", c)
 			stdout, err := command.StdoutPipe()
 			if err != nil {
 				fmt.Printf("Error creating StdoutPipe for command '%s': %v\n", c, err)
-				success = false
+				results = append(results, CommandResult{Command: c, Success: false, ExitCode: -1})
 				continue
 			}
 
 			stderr, err := command.StderrPipe()
 			if err != nil {
 				fmt.Printf("Error creating StderrPipe for command '%s': %v\n", c, err)
-				success = false
+				results = append(results, CommandResult{Command: c, Success: false, ExitCode: -1})
 				continue
 			}
 
 			if err := command.Start(); err != nil {
 				fmt.Printf("Error starting command '%s': %v\n", c, err)
-				success = false
+				results = append(results, CommandResult{Command: c, Success: false, ExitCode: -1})
 				continue
 			}
 
@@ -52,20 +53,24 @@ func (cr *CommandRunner) RunCommand(ctx context.Context, act Action) bool {
 
 			if err := command.Wait(); err != nil {
 				if exitErr, ok := err.(*exec.ExitError); ok {
-					fmt.Printf("Command '%s' failed with exit code %d\n", c, exitErr.ExitCode())
+					exitCode := exitErr.ExitCode()
+					fmt.Printf("Command '%s' failed with exit code %d\n", c, exitCode)
+					results = append(results, CommandResult{Command: c, Success: false, ExitCode: exitCode})
 				} else {
 					fmt.Printf("Command '%s' failed: %v\n", c, err)
+					results = append(results, CommandResult{Command: c, Success: false, ExitCode: -1})
 				}
-				success = false
 				if act.CancelOnFailure {
-					fmt.Printf("FAIL: Command '%s' failed and cancel-on-failure is set. Returning failure.\n", c)
-					return false
+					fmt.Printf("FAIL: Command '%s' failed on critical action. Cancelling further actions.\n", c)
+					return results
 				}
+			} else {
+				results = append(results, CommandResult{Command: c, Success: true, ExitCode: 0})
 			}
 		}
 	}
 
-	return success
+	return results
 }
 
 func (cr *CommandRunner) getActionShell(act Action) string {
