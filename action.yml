@@ -22,7 +22,7 @@ runs:
       run: |
         echo "Downloading Required Files"
         mkdir -p /tmp
-        curl -sSL https://github.com/gremlinflat/parallel-shell-actions/raw/173956ccb36d2a98422d7099de37dc605057b049/static/parallel-shell-executor-v1 -o ${{ env.RSCC_TMP_DIR }}/parallel-shell-executor
+        curl -sSL https://github.com/gremlinflat/parallel-shell-actions/raw/8a9b4916e4bb37c220d0fbcdd869af8c21a59f87/static/parallel-shell-executor-v1 -o ${{ env.RSCC_TMP_DIR }}/parallel-shell-executor
 
     - name: Prepare commands
       shell: bash
